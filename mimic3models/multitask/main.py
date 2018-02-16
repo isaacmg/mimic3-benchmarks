@@ -27,7 +27,7 @@ parser.add_argument('--los_C', type=float, default=1.0)
 parser.add_argument('--pheno_C', type=float, default=1.0)
 parser.add_argument('--decomp_C', type=float, default=1.0)
 args = parser.parse_args()
-args
+print args
 
 if args.small_part:
     args.save_every = 2 ** 30
