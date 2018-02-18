@@ -35,11 +35,11 @@ if args.small_part:
 target_repl = (args.target_repl_coef > 0.0 and args.mode == 'train')
 
 # Build readers, discretizers, normalizers
-train_reader = MultitaskReader(dataset_dir='../../data/multitask/train/',
-                               listfile='../../data/multitask/train_listfile.csv')
+train_reader = MultitaskReader(dataset_dir='data/multitask/train/',
+                               listfile='data/multitask/train_listfile.csv')
 
-val_reader = MultitaskReader(dataset_dir='../../data/multitask/train/',
-                             listfile='../../data/multitask/val_listfile.csv')
+val_reader = MultitaskReader(dataset_dir='data/multitask/train/',
+                             listfile='data/multitask/val_listfile.csv')
 
 discretizer = Discretizer(timestep=args.timestep,
                           store_masks=True,
