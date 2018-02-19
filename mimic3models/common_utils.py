@@ -28,6 +28,8 @@ def extract_features_from_rawdata(chunk, header, period, features):
 def read_chunk(reader, chunk_size):
     data = {}
     for i in range(chunk_size):
+        print "data here "
+        print data
         ret = reader.read_next()
         for k, v in ret.iteritems():
             if k not in data:
