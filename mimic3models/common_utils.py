@@ -34,7 +34,7 @@ def read_chunk(reader, chunk_size):
                 if k not in data:
                     data[k] = []
                 data[k].append(v)
-         except ValueError:
+        except ValueError:
             print "Oops code hit"
     data["header"] = data["header"][0]
     return data
