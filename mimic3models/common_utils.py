@@ -28,11 +28,14 @@ def extract_features_from_rawdata(chunk, header, period, features):
 def read_chunk(reader, chunk_size):
     data = {}
     for i in range(chunk_size):
-        ret = reader.read_next()
-        for k, v in ret.iteritems():
-            if k not in data:
-                data[k] = []
-            data[k].append(v)
+        try:
+            ret = reader.read_next()
+            for k, v in ret.iteritems():
+                if k not in data:
+                    data[k] = []
+                data[k].append(v)
+         except ValueError:
+            print "Oops code hit"
     data["header"] = data["header"][0]
     return data
 
