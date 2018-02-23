@@ -195,7 +195,7 @@ class Discretizer():
             else:
                 try:
                     value = float(value)
-                 except ValueError:
+                except ValueError:
                     print "value is not a float " + value
                     value = np.nan
                 data[bin_id, begin_pos[channel_id]] = value
