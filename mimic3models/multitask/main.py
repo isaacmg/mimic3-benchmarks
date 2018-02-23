@@ -17,6 +17,7 @@ import time
 import os
 import imp
 import re
+from keras.utils import plot_model
 
 parser = argparse.ArgumentParser()
 common_utils.add_common_arguments(parser)
@@ -122,6 +123,7 @@ model.compile(optimizer=optimizer_config,
               loss=loss_dict,
               loss_weights=loss_weights)
 model.summary()
+plot_model(model, to_file='model.png')
 
 # Load model weights
 n_trained_chunks = 0
