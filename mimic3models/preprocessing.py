@@ -193,7 +193,12 @@ class Discretizer():
                 for pos in range(N_values):
                     data[bin_id, begin_pos[channel_id] + pos] = one_hot[pos]
             else:
-                data[bin_id, begin_pos[channel_id]] = float(value)
+                try:
+                    value = float(value)
+                 except ValueError:
+                    print "value is not a float " + value
+                    value = np.nan
+                data[bin_id, begin_pos[channel_id]] = value
         
         for row in X:
             t = float(row[0]) - first_time
