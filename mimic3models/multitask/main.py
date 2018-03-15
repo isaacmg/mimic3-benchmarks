@@ -4,7 +4,7 @@ from mimic3models.preprocessing import Discretizer, Normalizer
 from mimic3models import metrics
 from mimic3models import keras_utils
 from mimic3models import common_utils
-from keras.callbacks import ModelCheckpoint, CSVLogger
+from keras.callbacks import ModelCheckpoint, CSVLogger, Tensorboard
 
 import mimic3models.in_hospital_mortality.utils as ihm_utils
 import mimic3models.decompensation.utils as decomp_utils
@@ -170,7 +170,7 @@ if args.mode == 'train':
         os.makedirs('keras_logs')
     csv_logger = CSVLogger(os.path.join('keras_logs', model.final_name + '.csv'),
                            append=True, separator=';')
-
+    t1 = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
     print "==> training"
     model.fit_generator(generator=train_data_gen,
                         steps_per_epoch=train_data_gen.steps,
@@ -178,7 +178,7 @@ if args.mode == 'train':
                         validation_steps=val_data_gen.steps,
                         epochs=n_trained_chunks + args.epochs,
                         initial_epoch=n_trained_chunks,
-                        callbacks=[metrics_callback, saver, csv_logger],
+                        callbacks=[metrics_callback, saver, csv_logger, t1],
                         verbose=args.verbose)
 
 elif args.mode == 'test':
