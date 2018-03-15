@@ -5,7 +5,6 @@ from mimic3models import metrics
 from mimic3models import keras_utils
 from mimic3models import common_utils
 from keras.callbacks import ModelCheckpoint, CSVLogger, TensorBoard
-
 import mimic3models.in_hospital_mortality.utils as ihm_utils
 import mimic3models.decompensation.utils as decomp_utils
 import mimic3models.length_of_stay.utils as los_utils
