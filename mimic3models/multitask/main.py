@@ -168,7 +168,7 @@ if args.mode == 'train':
     if not os.path.exists('keras_logs'):
         os.makedirs('keras_logs')
         
-    if not os.path.exits('logs'):
+    if not os.path.exists('logs'):
         os.makedirs('logs')
                     
     csv_logger = CSVLogger(os.path.join('keras_logs', model.final_name + '.csv'),
