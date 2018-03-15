@@ -170,7 +170,7 @@ if args.mode == 'train':
         os.makedirs('keras_logs')
     csv_logger = CSVLogger(os.path.join('keras_logs', model.final_name + '.csv'),
                            append=True, separator=';')
-    t1 = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
+    tb_data = Tensorboard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
     print "==> training"
     model.fit_generator(generator=train_data_gen,
                         steps_per_epoch=train_data_gen.steps,
@@ -178,7 +178,7 @@ if args.mode == 'train':
                         validation_steps=val_data_gen.steps,
                         epochs=n_trained_chunks + args.epochs,
                         initial_epoch=n_trained_chunks,
-                        callbacks=[metrics_callback, saver, csv_logger, t1],
+                        callbacks=[metrics_callback, saver, csv_logger, tb_data],
                         verbose=args.verbose)
 
 elif args.mode == 'test':
