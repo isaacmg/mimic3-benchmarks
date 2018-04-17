@@ -28,7 +28,7 @@ parser.add_argument('--los_C', type=float, default=1.0)
 parser.add_argument('--pheno_C', type=float, default=1.0)
 parser.add_argument('--decomp_C', type=float, default=1.0)
 
-args = parser.parse_args()
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -38,7 +38,9 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
         
-parser.add_argument('--tb', type=str2bool, default=False)      
+parser.add_argument('--tb', type=str2bool, default=False)
+args = parser.parse_args()
+
 print args
 
 if args.small_part:
@@ -187,13 +189,17 @@ if args.mode == 'train':
                            append=True, separator=';')
     tb_data = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
     print "==> training"
+    if args.tb: 
+        callback = [metrics_callback, saver, csv_logger, tb_data]
+    else: 
+        callback = [metrics_callback, saver, csv_logger]
     model.fit_generator(generator=train_data_gen,
                         steps_per_epoch=train_data_gen.steps,
                         validation_data=val_data_gen,
                         validation_steps=val_data_gen.steps,
                         epochs=n_trained_chunks + args.epochs,
                         initial_epoch=n_trained_chunks,
-                        callbacks=[metrics_callback, saver, csv_logger, tb_data],
+                        callbacks=callback,
                         verbose=args.verbose)
 
 elif args.mode == 'test':
