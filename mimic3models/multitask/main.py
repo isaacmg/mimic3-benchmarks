@@ -18,6 +18,7 @@ import imp
 import re
 from keras.utils import plot_model
 
+
 parser = argparse.ArgumentParser()
 common_utils.add_common_arguments(parser)
 parser.add_argument('--target_repl_coef', type=float, default=0.0)
@@ -26,7 +27,18 @@ parser.add_argument('--ihm_C', type=float, default=1.0)
 parser.add_argument('--los_C', type=float, default=1.0)
 parser.add_argument('--pheno_C', type=float, default=1.0)
 parser.add_argument('--decomp_C', type=float, default=1.0)
+
 args = parser.parse_args()
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+        
+parser.add_argument('--tb', type=str2bool, default=False)      
 print args
 
 if args.small_part:
