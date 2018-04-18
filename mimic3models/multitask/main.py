@@ -187,7 +187,8 @@ if args.mode == 'train':
                     
     csv_logger = CSVLogger(os.path.join('keras_logs', model.final_name + '.csv'),
                            append=True, separator=';')
-    tb_data = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
+   
+    tb_data = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=args.batch_size, write_graph=True, write_grads=False, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
     print "==> training"
     if args.tb: 
         callback = [metrics_callback, saver, csv_logger, tb_data]
