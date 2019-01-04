@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import print_function
+
 from mimic3models.multitask import utils
 from mimic3benchmark.readers import MultitaskReader
 from mimic3models.preprocessing import Discretizer, Normalizer
@@ -12,7 +15,6 @@ import mimic3models.phenotyping.utils as pheno_utils
 
 import numpy as np
 import argparse
-import time
 import os
 import imp
 import re
@@ -28,8 +30,6 @@ parser.add_argument('--los_C', type=float, default=1.0)
 parser.add_argument('--pheno_C', type=float, default=1.0)
 parser.add_argument('--decomp_C', type=float, default=1.0)
 
-
-
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -41,7 +41,12 @@ def str2bool(v):
 parser.add_argument('--tb', type=str2bool, default=False)
 args = parser.parse_args()
 
-print args
+parser.add_argument('--data', type=str, help='Path to the data of multitasking',
+                    default=os.path.join(os.path.dirname(__file__), '../../data/multitask/'))
+parser.add_argument('--output_dir', type=str, help='Directory relative which all output files are stored',
+                    default='.')
+args = parser.parse_args()
+print(args)
 
 if args.small_part:
     args.save_every = 2 ** 30
@@ -49,22 +54,26 @@ if args.small_part:
 target_repl = (args.target_repl_coef > 0.0 and args.mode == 'train')
 
 # Build readers, discretizers, normalizers
-train_reader = MultitaskReader(dataset_dir='data/multitask/train/',
-                               listfile='data/multitask/train_listfile.csv')
+train_reader = MultitaskReader(dataset_dir=os.path.join(args.data, 'train'),
+                               listfile=os.path.join(args.data, 'train_listfile.csv'))
 
-val_reader = MultitaskReader(dataset_dir='data/multitask/train/',
-                             listfile='data/multitask/val_listfile.csv')
+val_reader = MultitaskReader(dataset_dir=os.path.join(args.data, 'train'),
+                             listfile=os.path.join(args.data, 'val_listfile.csv'))
 
 discretizer = Discretizer(timestep=args.timestep,
                           store_masks=True,
-                          imput_strategy='previous',
+                          impute_strategy='previous',
                           start_time='zero')
 
 discretizer_header = discretizer.transform(train_reader.read_example(0)["X"])[1].split(',')
 cont_channels = [i for (i, x) in enumerate(discretizer_header) if x.find("->") == -1]
 
-normalizer = Normalizer(fields=cont_channels)  # choose here onlycont vs all
-normalizer.load_params('mult_ts%s.input_str:%s.start_time:zero.normalizer' % (args.timestep, args.imputation))
+normalizer = Normalizer(fields=cont_channels)  # choose here which columns to standardize
+normalizer_state = args.normalizer_state
+if normalizer_state is None:
+    normalizer_state = 'mult_ts{}.input_str:{}.start_time:zero.normalizer'.format(args.timestep, args.imputation)
+    normalizer_state = os.path.join(os.path.dirname(__file__), normalizer_state)
+normalizer.load_params(normalizer_state)
 
 args_dict = dict(args._get_kwargs())
 args_dict['header'] = discretizer_header
@@ -72,7 +81,7 @@ args_dict['ihm_pos'] = int(48.0 / args.timestep - 1e-6)
 args_dict['target_repl'] = target_repl
 
 # Build the model
-print "==> using model {}".format(args.network)
+print("==> using model {}".format(args.network))
 model_module = imp.load_source(os.path.basename(args.network), args.network)
 model = model_module.Network(**args_dict)
 suffix = ".bs{}{}{}.ts{}{}_partition={}_ihm={}_decomp={}_los={}_pheno={}".format(
@@ -87,10 +96,10 @@ suffix = ".bs{}{}{}.ts{}{}_partition={}_ihm={}_decomp={}_los={}_pheno={}".format
     args.los_C,
     args.pheno_C)
 model.final_name = args.prefix + model.say_name() + suffix
-print "==> model.final_name:", model.final_name
+print("==> model.final_name:", model.final_name)
 
 # Compile the model
-print "==> compiling the model"
+print("==> compiling the model")
 optimizer_config = {'class_name': args.optimizer,
                     'config': {'lr': args.lr,
                                'beta_1': args.beta_1}}
@@ -166,7 +175,7 @@ val_data_gen = utils.BatchGen(reader=val_reader,
 
 if args.mode == 'train':
     # Prepare training
-    path = 'keras_states/' + model.final_name + '.epoch{epoch}.test{val_loss}.state'
+    path = os.path.join(args.output_dir, 'keras_states/' + model.final_name + '.epoch{epoch}.test{val_loss}.state')
 
     metrics_callback = keras_utils.MultitaskMetrics(train_data_gen=train_data_gen,
                                                     val_data_gen=val_data_gen,
@@ -189,7 +198,7 @@ if args.mode == 'train':
                            append=True, separator=';')
    
     tb_data = TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=args.batch_size, write_graph=True, write_grads=False, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None)
-    print "==> training"
+    print("==> training")
     if args.tb: 
         callback = [metrics_callback, saver, csv_logger, tb_data]
     else: 
@@ -210,8 +219,8 @@ elif args.mode == 'test':
     del train_data_gen
     del val_data_gen
 
-    test_reader = MultitaskReader(dataset_dir='../../data/multitask/test/',
-                                  listfile='../../data/multitask/test_listfile.csv')
+    test_reader = MultitaskReader(dataset_dir=os.path.join(args.data, 'test'),
+                                  listfile=os.path.join(args.data, 'test_listfile.csv'))
 
     test_data_gen = utils.BatchGen(reader=test_reader,
                                    discretizer=discretizer,
@@ -243,7 +252,7 @@ elif args.mode == 'test':
     pheno_ts = []
 
     for i in range(test_data_gen.steps):
-        print "\r\tdone {}/{}".format(i, test_data_gen.steps),
+        print("\tdone {}/{}".format(i, test_data_gen.steps), end='\r')
         ret = test_data_gen.next(return_y_true=True)
         (X, y, los_y_reg) = ret["data"]
         outputs = model.predict(X, batch_size=args.batch_size)
@@ -302,23 +311,23 @@ elif args.mode == 'test':
         for (t, p) in zip(pheno_t.reshape((-1, 25)), pheno_p.reshape((-1, 25))):
             pheno_y_true.append(t)
             pheno_pred.append(p)
-    print "\n"
+    print('\n')
 
     # ihm
     if args.ihm_C > 0:
-        print "\n ================= 48h mortality ================"
+        print("\n ================= 48h mortality ================")
         ihm_pred = np.array(ihm_pred)
         ihm_ret = metrics.print_metrics_binary(ihm_y_true, ihm_pred)
 
     # decomp
     if args.decomp_C > 0:
-        print "\n ================ decompensation ================"
+        print("\n ================ decompensation ================")
         decomp_pred = np.array(decomp_pred)
         decomp_ret = metrics.print_metrics_binary(decomp_y_true, decomp_pred)
 
     # los
     if args.los_C > 0:
-        print "\n ================ length of stay ================"
+        print("\n ================ length of stay ================")
         if args.partition == 'log':
             los_pred = [metrics.get_estimate_log(x, 10) for x in los_pred]
             los_ret = metrics.print_metrics_log_bins(los_y_true, los_pred)
@@ -330,26 +339,30 @@ elif args.mode == 'test':
 
     # pheno
     if args.pheno_C > 0:
-        print "\n =================== phenotype =================="
+        print("\n =================== phenotype ==================")
         pheno_pred = np.array(pheno_pred)
         pheno_ret = metrics.print_metrics_multilabel(pheno_y_true, pheno_pred)
 
-    print "Saving the predictions in test_predictions/task directories ..."
+    print("Saving the predictions in test_predictions/task directories ...")
 
     # ihm
-    ihm_path = os.path.join("test_predictions/ihm", os.path.basename(args.load_state)) + ".csv"
+    ihm_path = os.path.join(os.path.join(args.output_dir,
+                                         "test_predictions/ihm", os.path.basename(args.load_state)) + ".csv")
     ihm_utils.save_results(ihm_names, ihm_pred, ihm_y_true, ihm_path)
 
     # decomp
-    decomp_path = os.path.join("test_predictions/decomp", os.path.basename(args.load_state)) + ".csv"
+    decomp_path = os.path.join(os.path.join(args.output_dir,
+                                            "test_predictions/decomp", os.path.basename(args.load_state)) + ".csv")
     decomp_utils.save_results(decomp_names, decomp_ts, decomp_pred, decomp_y_true, decomp_path)
 
     # los
-    los_path = os.path.join("test_predictions/los", os.path.basename(args.load_state)) + ".csv"
+    los_path = os.path.join(os.path.join(args.output_dir,
+                                         "test_predictions/los", os.path.basename(args.load_state)) + ".csv")
     los_utils.save_results(los_names, los_ts, los_pred, los_y_true, los_path)
 
     # pheno
-    pheno_path = os.path.join("test_predictions/pheno", os.path.basename(args.load_state)) + ".csv"
+    pheno_path = os.path.join(os.path.join(args.output_dir,
+                                           "test_predictions/pheno", os.path.basename(args.load_state)) + ".csv")
     pheno_utils.save_results(pheno_names, pheno_ts, pheno_pred, pheno_y_true, pheno_path)
 
 else:
